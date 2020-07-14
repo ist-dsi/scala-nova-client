@@ -22,7 +22,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
    * @param userId id of user to list the quotas for.
    */
   def get(projectId: String, userId: Option[String] = None): F[WithId[Quota]] =
-    super.get(buildUri(projectId, userId), wrappedAt = Some(name))
+    super.get(wrappedAt = Some(name), buildUri(projectId, userId))
 
   /**
    * Shows quota usage for a project.
@@ -30,13 +30,13 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
    * @param userId id of user to list the quotas for.
    */
   def getUsage(projectId: String, userId: Option[String] = None): F[WithId[QuotaUsage]] =
-    super.get(buildUri(projectId, userId) / "detail", wrappedAt = Some(name))
+    super.get(wrappedAt = Some(name), buildUri(projectId, userId) / "detail")
 
   /**
    * Gets default quotas for a project.
    * @param projectId UUID of the project.
    */
-  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(uri / projectId / "defaults", wrappedAt = Some(name))
+  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId / "defaults")
 
   /**
    * Update the quotas for a project or a project and a user.
@@ -47,7 +47,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
    */
   def update(projectId: String, quotas: Quota.Create, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
     val forcedEncoder: Encoder[Quota.Create] = implicitly[Encoder.AsObject[Quota.Create]].mapJsonObject(_.add("force", force.asJson))
-    super.put(quotas, buildUri(projectId, userId), wrappedAt = Some(name))(forcedEncoder, Quota.decoder)
+    super.put(wrappedAt = Some(name), quotas, buildUri(projectId, userId))(forcedEncoder, Quota.decoder)
   }
 
   /**

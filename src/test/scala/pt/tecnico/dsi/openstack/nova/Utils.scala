@@ -3,7 +3,8 @@ package pt.tecnico.dsi.openstack.nova
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
-import cats.effect.{ContextShift, IO, Timer}
+import scala.util.Random
+import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
 import org.http4s.Uri
@@ -14,9 +15,9 @@ import org.scalatest._
 import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
+import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
-import pt.tecnico.dsi.openstack.keystone.models.Scope.Project
-import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface}
+import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project, Scope}
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll {
   val logger: Logger = getLogger
@@ -37,18 +38,28 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
   implicit val httpClient: Client[IO] = _httpClient
 
-  val keystoneClient: IO[KeystoneClient[IO]] = KeystoneClient.fromEnvironment()
+  val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
 
-  val client: IO[NovaClient[IO]] = for {
-    keystone <- keystoneClient
-    session = keystone.session
-    novaUrlOpt = session.catalog.collectFirst { case entry @ CatalogEntry("compute", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public) }.flatten
-    novaUrl <- IO.fromEither(novaUrlOpt.toRight(new Throwable("Could not find \"compute\" service in the catalog")))
+  val nova: NovaClient[IO] = {
+    val novaUrl = keystone.session.catalog.collectFirst {
+      case entry @ CatalogEntry("compute", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public)
+    }.flatten.getOrElse(throw new Exception("Could not find \"compute\" service in the catalog"))
     // Since we performed a scoped authentication to the admin project openstack tries to be clever and returns the nova public url already
     // scoped to that project. That is: instead of returning "https://somehost.com:8774/v2.1", it returns "https://somehost.com:8774/v2.1/<admin-project-id>"
     // So we need to drop the admin-project-id
-    adminProjectId = session.scope.asInstanceOf[Project].id
-  } yield new NovaClient[IO](Uri.unsafeFromString(novaUrl.stripSuffix(s"/$adminProjectId")), keystone.authToken)
+    val adminProjectId = keystone.session.scope.asInstanceOf[Scope.Project].id
+    new NovaClient[IO](Uri.unsafeFromString(novaUrl.stripSuffix(s"/$adminProjectId")), keystone.authToken)
+  }
+
+  // Not very purely functional :(
+  val random = new Random()
+  def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
+  def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
+
+  val withStubProject: Resource[IO, WithId[Project]] = {
+    val create = withRandomName(name => keystone.projects.create(Project(name, "dummy project", "default")))
+    Resource.make(create)(project => keystone.projects.delete(project))
+  }
 
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
@@ -82,32 +93,5 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   }
 
   import scala.language.implicitConversions
-  implicit def io2Future[T](io: IO[T]): Future[T] = io.unsafeToFuture()
-
-  private def ordinalSuffix(number: Int): String = {
-    number % 100 match {
-      case 1 => "st"
-      case 2 => "nd"
-      case 3 => "rd"
-      case _ => "th"
-    }
-  }
-
-  def idempotently(test: NovaClient[IO] => IO[Assertion], repetitions: Int = 3): Future[Assertion] = {
-    require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
-
-    // If the first run fails we do not want to mask its exception, because failing in the first attempt means
-    // whatever is being tested in `test` is not implemented correctly.
-    client.flatMap(test).unsafeToFuture().flatMap { _ =>
-      // For the subsequent iterations we mask TestFailed with "Operation is not idempotent"
-      Future.traverse(2 to repetitions) { repetition =>
-        client.flatMap(test).unsafeToFuture().transform(identity, {
-          case e: TestFailedException =>
-            val text = s"$repetition${ordinalSuffix(repetition)}"
-            e.modifyMessage(_.map(m => s"Operation is not idempotent. On $text repetition got:\n$m"))
-          case e => e
-        })
-      } map (_ should contain only (Succeeded)) // Scalatest flatten :P
-    }
-  }
+  implicit def ioAssertion2FutureAssertion(io: IO[Assertion]): Future[Assertion] = io.unsafeToFuture()
 }
