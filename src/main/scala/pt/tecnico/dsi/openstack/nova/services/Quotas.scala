@@ -1,11 +1,11 @@
 package pt.tecnico.dsi.openstack.nova.services
 
 import cats.effect.Sync
-import io.circe.Encoder
+import cats.syntax.flatMap._
+import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
 import org.http4s.client.Client
 import org.http4s.{Header, Uri}
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
 
@@ -15,13 +15,37 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
 
   private def buildUri(projectId: String, userId: Option[String]): Uri = (uri / projectId).withOptionQueryParam("user_id", userId)
 
+  // In a Rest API if the resource does not exist you return a BadRequest not a NotFound </sarcasm>
+  private def getOption[R: Decoder](uri: Uri): F[Option[R]] = {
+    import dsl._
+    import cats.syntax.applicative._
+    import cats.syntax.functor._
+    import org.http4s.Method.GET
+    import org.http4s.Status.{BadRequest, Successful}
+    import org.http4s.EntityDecoder
+
+    implicit val d: EntityDecoder[F, R] = unwrapped(Some(name))
+    GET(uri, authToken).flatMap(client.run(_).use {
+      case Successful(response) => response.as[R].map(Option.apply)
+      case BadRequest(_) => Option.empty[R].pure[F]
+    })
+  }
+
   /**
    * Shows quotas for a project.
    *
    * @param projectId UUID of the project.
    * @param userId id of user to list the quotas for.
    */
-  def get(projectId: String, userId: Option[String] = None): F[WithId[Quota]] =
+  def get(projectId: String, userId: Option[String] = None): F[Option[Quota]] =
+    getOption(buildUri(projectId, userId))
+  /**
+   * Shows quotas for a project assuming the project/user exist.
+   *
+   * @param projectId UUID of the project.
+   * @param userId id of user to list the quotas for.
+   */
+  def apply(projectId: String, userId: Option[String] = None): F[Quota] =
     super.get(wrappedAt = Some(name), buildUri(projectId, userId))
 
   /**
@@ -29,14 +53,28 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
    * @param projectId UUID of the project.
    * @param userId id of user to list the quotas for.
    */
-  def getUsage(projectId: String, userId: Option[String] = None): F[WithId[QuotaUsage]] =
+  def getUsage(projectId: String, userId: Option[String] = None): F[Option[QuotaUsage]] =
+    getOption(buildUri(projectId, userId) / "detail")
+  /**
+   * Shows quota usage for a project assuming the project/user exist.
+   * @param projectId UUID of the project.
+   * @param userId id of user to list the quotas for.
+   */
+  def applyUsage(projectId: String, userId: Option[String] = None): F[QuotaUsage] =
     super.get(wrappedAt = Some(name), buildUri(projectId, userId) / "detail")
 
   /**
    * Gets default quotas for a project.
    * @param projectId UUID of the project.
    */
-  def getDefaults(projectId: String): F[WithId[Quota]] = super.get(wrappedAt = Some(name), uri / projectId / "defaults")
+  def getDefaults(projectId: String): F[Option[Quota]] =
+    getOption(uri / projectId / "defaults")
+  /**
+   * Gets default quotas for a project assuming the project exists.
+   * @param projectId UUID of the project.
+   */
+  def applyDefaults(projectId: String): F[Quota] =
+    super.get(wrappedAt = Some(name), uri / projectId / "defaults")
 
   /**
    * Update the quotas for a project or a project and a user.
