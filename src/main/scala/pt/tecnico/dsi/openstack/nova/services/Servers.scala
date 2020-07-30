@@ -4,7 +4,6 @@ import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.openstack.common.models.WithId
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.nova.models.ServerSummary
 
@@ -18,8 +17,8 @@ final class Servers[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends
    *
    * @param query extra query params to pass in the request.
    */
-  def listSummary(query: Query = Query.empty): Stream[F, WithId[ServerSummary]] =
-    super.list[WithId[ServerSummary]](pluralName, uri, query)
+  def listSummary(query: Query = Query.empty): Stream[F, ServerSummary] =
+    super.list[ServerSummary](pluralName, uri, query)
 
   /**
    * Deletes a server.

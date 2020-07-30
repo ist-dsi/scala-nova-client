@@ -25,7 +25,7 @@ scalacOptions ++= Seq(
   "-Wdead-code",                   // Warn when dead code is identified.
   "-Wextra-implicit",              // Warn when more than one implicit parameter section is defined.
   "-Wnumeric-widen",               // Warn when numerics are widened.
-  //"-Woctal-literal",               // Warn on obsolete octal syntax.
+  "-Woctal-literal",               // Warn on obsolete octal syntax.
   "-Wvalue-discard",               // Warn when non-Unit expression results are unused.
   "-Wunused:_",                    // Enables every warning of unused members/definitions/etc
 )
@@ -40,14 +40,11 @@ scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 // ======================================================================================================================
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
-libraryDependencies ++= Seq("blaze-client", "circe").map { module =>
-  "org.http4s"      %% s"http4s-$module"      % "0.21.6"
-} ++ Seq(
-  "io.circe"        %% "circe-derivation"      % "0.13.0-M4",
+libraryDependencies ++= Seq(
+  "pt.tecnico.dsi"  %% "scala-openstack-common-clients" % "0.2.0-SNAPSHOT",
   "org.typelevel"   %% "squants"               % "1.6.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
-  "pt.tecnico.dsi"  %% "scala-openstack-common-clients" % "0.1.0-SNAPSHOT",
-  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.1.0-SNAPSHOT" % Test,
+  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.2.0-SNAPSHOT" % Test,
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
   "org.scalatest"   %% "scalatest"             % "3.2.0" % Test,
 )
