@@ -3,11 +3,12 @@ package pt.tecnico.dsi.openstack.nova.services
 import cats.effect.Sync
 import fs2.Stream
 import org.http4s.client.Client
-import org.http4s.{Header, Query, Uri}
+import org.http4s.{Query, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
+import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.ServerSummary
 
-final class Servers[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
+final class Servers[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
   val name = "server"
   val pluralName = s"${name}s"
   val uri: Uri = baseUri / pluralName

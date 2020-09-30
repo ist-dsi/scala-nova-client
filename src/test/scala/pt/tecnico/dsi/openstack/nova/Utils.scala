@@ -7,7 +7,6 @@ import scala.util.Random
 import cats.effect.{ContextShift, IO, Resource, Timer}
 import cats.instances.list._
 import cats.syntax.traverse._
-import org.http4s.Uri
 import org.http4s.client.Client
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.log4s._
@@ -16,40 +15,31 @@ import org.scalatest.exceptions.TestFailedException
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
-import pt.tecnico.dsi.openstack.keystone.models.{CatalogEntry, Interface, Project, Scope}
+import pt.tecnico.dsi.openstack.keystone.models.Project
 
 abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll with OptionValues with EitherValues {
   val logger: Logger = getLogger
-
+  
   implicit override def executionContext = ExecutionContext.global
-
+  
   implicit val timer: Timer[IO] = IO.timer(executionContext)
   implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-
+  
   val (_httpClient, finalizer) = BlazeClientBuilder[IO](global)
     .withResponseHeaderTimeout(20.seconds)
     .withCheckEndpointAuthentication(false)
     .resource.allocated.unsafeRunSync()
-
+  
   override protected def afterAll(): Unit = finalizer.unsafeRunSync()
-
+  
   //import org.http4s.client.middleware.Logger
   //implicit val httpClient: Client[IO] = Logger(logBody = true, logHeaders = true)(_httpClient)
   implicit val httpClient: Client[IO] = _httpClient
-
+  
   val keystone: KeystoneClient[IO] = KeystoneClient.fromEnvironment().unsafeRunSync()
-
-  val nova: NovaClient[IO] = {
-    val novaUrl = keystone.session.catalog.collectFirst {
-      case entry @ CatalogEntry("compute", _, _, _) => entry.urlOf(sys.env("OS_REGION_NAME"), Interface.Public)
-    }.flatten.getOrElse(throw new Exception("Could not find \"compute\" service in the catalog"))
-    // Since we performed a scoped authentication to the admin project openstack tries to be clever and returns the nova public url already
-    // scoped to that project. That is: instead of returning "https://somehost.com:8774/v2.1", it returns "https://somehost.com:8774/v2.1/<admin-project-id>"
-    // So we need to drop the admin-project-id
-    val adminProjectId = keystone.session.scope.asInstanceOf[Scope.Project].id
-    new NovaClient[IO](Uri.unsafeFromString(novaUrl.stripSuffix(s"/$adminProjectId")), keystone.authToken)
-  }
-
+  val nova: NovaClient[IO] = keystone.session.clientBuilder[IO](NovaClient, sys.env("OS_REGION_NAME"))
+    .fold(s => throw new Exception(s), identity)
+  
   // Not very purely functional :(
   val random = new Random()
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase

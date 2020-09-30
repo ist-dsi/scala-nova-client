@@ -2,14 +2,15 @@ package pt.tecnico.dsi.openstack.nova.services
 
 import cats.effect.Sync
 import cats.syntax.flatMap._
-import io.circe.{Decoder, Encoder}
 import io.circe.syntax._
+import io.circe.{Decoder, Encoder}
+import org.http4s.Uri
 import org.http4s.client.Client
-import org.http4s.{Header, Uri}
 import pt.tecnico.dsi.openstack.common.services.Service
+import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
 
-final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends Service[F](authToken) {
+final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
   val uri: Uri = baseUri / "os-quota-sets"
   val name = "quota_set"
 
@@ -17,12 +18,12 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, authToken: Header) extends 
 
   // In a Rest API if the resource does not exist you return a BadRequest not a NotFound </sarcasm>
   private def getOption[R: Decoder](uri: Uri): F[Option[R]] = {
-    import dsl._
     import cats.syntax.applicative._
     import cats.syntax.functor._
+    import dsl._
+    import org.http4s.EntityDecoder
     import org.http4s.Method.GET
     import org.http4s.Status.{BadRequest, Successful}
-    import org.http4s.EntityDecoder
 
     implicit val d: EntityDecoder[F, R] = unwrapped(Some(name))
     GET(uri, authToken).flatMap(client.run(_).use {
