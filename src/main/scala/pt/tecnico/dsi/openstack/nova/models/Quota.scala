@@ -1,7 +1,5 @@
 package pt.tecnico.dsi.openstack.nova.models
 
-import cats.arrow.FunctionK
-import cats.{Id, ~>}
 import io.circe.syntax._
 import io.circe.{Codec, Decoder, Encoder, HCursor, JsonObject}
 import squants.information.{Bytes, Information, InformationUnit, Mebibytes}
@@ -9,36 +7,10 @@ import squants.information.{Bytes, Information, InformationUnit, Mebibytes}
 object Quota {
   def informationCodecIn(unit: InformationUnit): Codec[Information] =
     Codec.from(Decoder.decodeInt.map(unit(_)), Encoder.encodeInt.contramap(_.to(unit).ceil.toInt))
-
+  
   val inMebibytesCodec: Codec[Information] = informationCodecIn(Mebibytes)
   val inBytesCodec: Codec[Information] = informationCodecIn(Bytes)
-
-  // Its better to have this slightly uglier than to repeat it for the QuotaUsage.
-  private[models] def decoder[F[_], T](f: (F[Int], F[Int], F[Int], F[Int], F[Information], F[Int], F[Int],
-    F[Int], F[Int], F[Int], F[Int], F[Int], F[Information], F[Information]) => T)
-    (lift: Decoder ~> λ[A => Decoder[F[A]]]): Decoder[T] = (cursor: HCursor) => {
-    // Polymorphic function types would be handy https://blog.oyanglul.us/scala/dotty/en/rank-n-type
-    implicit def convert[A](implicit decoder: Decoder[A]): Decoder[F[A]] = lift(decoder)
-    for {
-      cores <- cursor.get[F[Int]]("cores")
-      instances <- cursor.get[F[Int]]("instances")
-      keyPairs <- cursor.get[F[Int]]("key_pairs")
-      metadataItems <- cursor.get[F[Int]]("metadata_items")
-      ram <- cursor.get[F[Information]]("ram")(lift(inMebibytesCodec))
-      serverGroups <- cursor.get[F[Int]]("server_groups")
-      serverGroupMembers <- cursor.get[F[Int]]("server_group_members")
-      fixedIps <- cursor.get[F[Int]]("fixed_ips")
-      floatingIps <- cursor.get[F[Int]]("floating_ips")
-      securityGroups <- cursor.get[F[Int]]("security_groups")
-      securityGroupRules <- cursor.get[F[Int]]("security_group_rules")
-      injectedFiles <- cursor.get[F[Int]]("injected_files")
-      injectedFileContentBytes <- cursor.get[F[Information]]("injected_file_content_bytes")(lift(inBytesCodec))
-      injectedFilePathBytes <- cursor.get[F[Information]]("injected_file_path_bytes")(lift(inBytesCodec))
-    } yield f(cores, instances, keyPairs, metadataItems, ram, serverGroups, serverGroupMembers, fixedIps, floatingIps,
-      securityGroups, securityGroupRules, injectedFiles, injectedFileContentBytes, injectedFilePathBytes)
-  }
-  implicit val decoder: Decoder[Quota] = decoder[Id, Quota](Quota.apply)(FunctionK.id)
-
+  
   object Create {
     implicit val encoder: Encoder.AsObject[Create] = (quota: Create) => JsonObject(
       "cores" -> quota.cores.asJson,
@@ -73,12 +45,25 @@ object Quota {
     injectedFileContent: Option[Information] = None,
     injectedFilePath: Option[Information] = None,
   )
+  
+  implicit val decoder: Decoder[Quota] = (cursor: HCursor) => for {
+    cores <- cursor.get[Int]("cores")
+    instances <- cursor.get[Int]("instances")
+    keyPairs <- cursor.get[Int]("key_pairs")
+    metadataItems <- cursor.get[Int]("metadata_items")
+    ram <- cursor.get[Information]("ram")(inMebibytesCodec)
+    serverGroups <- cursor.get[Int]("server_groups")
+    serverGroupMembers <- cursor.get[Int]("server_group_members")
+    fixedIps <- cursor.get[Int]("fixed_ips")
+    floatingIps <- cursor.get[Int]("floating_ips")
+    securityGroups <- cursor.get[Int]("security_groups")
+    securityGroupRules <- cursor.get[Int]("security_group_rules")
+    injectedFiles <- cursor.get[Int]("injected_files")
+    injectedFileContentBytes <- cursor.get[Information]("injected_file_content_bytes")(inBytesCodec)
+    injectedFilePathBytes <- cursor.get[Information]("injected_file_path_bytes")(inBytesCodec)
+  } yield Quota(cores, instances, keyPairs, metadataItems, ram, serverGroups, serverGroupMembers, fixedIps, floatingIps,
+    securityGroups, securityGroupRules, injectedFiles, injectedFileContentBytes, injectedFilePathBytes)
 }
-// We could just have:
-//   QuotaBase[F[_]](cores: F[Int], ...)
-//   type Quota = QuotaBase[Id]
-//   type QuotaUsage = QuotaBase[Usage]
-
 /**
  * A value of -1 means no limit.
  * @param cores number of allowed server cores for each project.
