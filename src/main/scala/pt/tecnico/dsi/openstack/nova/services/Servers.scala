@@ -12,15 +12,23 @@ final class Servers[F[_]: Sync: Client](baseUri: Uri, session: Session) extends 
   val name = "server"
   val pluralName = s"${name}s"
   val uri: Uri = baseUri / pluralName
-
+  
   /**
    * Lists summary information for all servers the project ID associated with the authenticated request can access.
    *
    * @param query extra query params to pass in the request.
    */
-  def listSummary(query: Query = Query.empty): Stream[F, ServerSummary] =
+  def streamSummary(query: Query = Query.empty): Stream[F, ServerSummary] =
+    super.stream[ServerSummary](pluralName, uri, query)
+  
+  /**
+   * Lists summary information for all servers the project ID associated with the authenticated request can access.
+   *
+   * @param query extra query params to pass in the request.
+   */
+  def listSummary(query: Query = Query.empty): F[List[ServerSummary]] =
     super.list[ServerSummary](pluralName, uri, query)
-
+  
   /**
    * Deletes a server.
    *
