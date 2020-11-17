@@ -1,6 +1,8 @@
 package pt.tecnico.dsi.openstack.nova
 
+import scala.annotation.nowarn
 import cats.effect.IO
+import cats.syntax.show._
 import pt.tecnico.dsi.openstack.common.models.UnexpectedStatus
 import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.common.models.Usage
@@ -94,6 +96,21 @@ class QuotasSpec extends Utils {
     }
     "delete quotas for a project" in withStubProject.use[IO, Assertion] { project =>
       quotas.delete(project.id).idempotently(_ shouldBe ())
+    }
+    
+    s"show quotas" in withStubProject.use[IO, Assertion] { project =>
+      quotas.apply(project.id).map { quotas =>
+        //This line is a fail fast mechanism, and prevents false positives from the linter
+        println(show"$quotas")
+        """show"$quotas"""" should compile: @nowarn
+      }
+    }
+    s"show quota usage" in withStubProject.use[IO, Assertion] { project =>
+      quotas.getUsage(project.id).map { quotaUsage =>
+        //This line is a fail fast mechanism, and prevents false positives from the linter
+        println(show"$quotaUsage")
+        """show"$quotaUsage"""" should compile: @nowarn
+      }
     }
   }
 }

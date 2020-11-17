@@ -1,11 +1,15 @@
 package pt.tecnico.dsi.openstack.nova.models
 
+import cats.derived
+import cats.derived.ShowPretty
 import io.circe.{Decoder, HCursor}
 import pt.tecnico.dsi.openstack.common.models.Usage
 import pt.tecnico.dsi.openstack.nova.models.Quota.{inBytesCodec, inMebibytesCodec}
+import pt.tecnico.dsi.openstack.nova.models.showInformation
 import squants.information.Information
 
 object QuotaUsage {
+  // Yup that's whats consistency looks like, some things are in MiB others in Bytes </sarcasm>
   implicit val decoder: Decoder[QuotaUsage] = (cursor: HCursor) => for {
     cores <- cursor.get[Usage[Int]]("cores")
     instances <- cursor.get[Usage[Int]]("instances")
@@ -23,6 +27,8 @@ object QuotaUsage {
     injectedFilePathBytes <- cursor.get[Usage[Information]]("injected_file_path_bytes")(Usage.decoder(inBytesCodec))
   } yield QuotaUsage(cores, instances, keyPairs, metadataItems, ram, serverGroups, serverGroupMembers, fixedIps, floatingIps,
     securityGroups, securityGroupRules, injectedFiles, injectedFileContentBytes, injectedFilePathBytes)
+  
+  implicit val show: ShowPretty[QuotaUsage] = derived.semiauto.showPretty
 }
 /**
   * A value of -1 means no limit.

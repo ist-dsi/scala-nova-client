@@ -1,8 +1,11 @@
 package pt.tecnico.dsi.openstack.nova.models
 
+import cats.derived
+import cats.derived.ShowPretty
 import io.circe.syntax._
 import io.circe.{Codec, Decoder, Encoder, HCursor, JsonObject}
 import squants.information.{Bytes, Information, InformationUnit, Mebibytes}
+import pt.tecnico.dsi.openstack.nova.models.showInformation
 
 object Quota {
   def informationCodecIn(unit: InformationUnit): Codec[Information] =
@@ -12,6 +15,7 @@ object Quota {
   val inBytesCodec: Codec[Information] = informationCodecIn(Bytes)
   
   object Create {
+    // Yup that's whats consistency looks like, some things are in MiB others in Bytes </sarcasm>
     implicit val encoder: Encoder.AsObject[Create] = (quota: Create) => JsonObject(
       "cores" -> quota.cores.asJson,
       "instances" -> quota.instances.asJson,
@@ -28,6 +32,8 @@ object Quota {
       "injected_file_content" -> quota.injectedFileContent.asJson(Encoder.encodeOption(inBytesCodec)),
       "injected_file_path" -> quota.injectedFilePath.asJson(Encoder.encodeOption(inBytesCodec)),
     )
+    
+    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   final case class Create(
     cores: Option[Int] = None,
@@ -46,6 +52,7 @@ object Quota {
     injectedFilePath: Option[Information] = None,
   )
   
+  // Yup that's whats consistency looks like, some things are in MiB others in Bytes </sarcasm>
   implicit val decoder: Decoder[Quota] = (cursor: HCursor) => for {
     cores <- cursor.get[Int]("cores")
     instances <- cursor.get[Int]("instances")
@@ -63,6 +70,8 @@ object Quota {
     injectedFilePathBytes <- cursor.get[Information]("injected_file_path_bytes")(inBytesCodec)
   } yield Quota(cores, instances, keyPairs, metadataItems, ram, serverGroups, serverGroupMembers, fixedIps, floatingIps,
     securityGroups, securityGroupRules, injectedFiles, injectedFileContentBytes, injectedFilePathBytes)
+  
+  implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
 /**
  * A value of -1 means no limit.
