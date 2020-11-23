@@ -20,13 +20,6 @@ class QuotasSpec extends Utils {
     ram = 50.gibibytes,
     serverGroups = 10,
     serverGroupMembers = 10,
-    fixedIps = -1,
-    floatingIps = 10,
-    securityGroups = 10,
-    securityGroupRules = 20,
-    injectedFiles = 5,
-    injectedFileContent = 10.kibibytes,
-    injectedFilePath = 255.bytes,
   )
 
   val defaultQuotaUsage = QuotaUsage(
@@ -37,13 +30,6 @@ class QuotasSpec extends Utils {
     ram = Usage(0.gibibytes, defaultQuotas.ram, 0.gibibytes),
     serverGroups = Usage(0, defaultQuotas.serverGroups, 0),
     serverGroupMembers = Usage(0, defaultQuotas.serverGroupMembers, 0),
-    fixedIps = Usage(0, defaultQuotas.fixedIps, 0),
-    floatingIps = Usage(0, defaultQuotas.floatingIps, 0),
-    securityGroups = Usage(0, defaultQuotas.securityGroups, 0),
-    securityGroupRules = Usage(0, defaultQuotas.securityGroupRules, 0),
-    injectedFiles = Usage(0, defaultQuotas.injectedFiles, 0),
-    injectedFileContent = Usage(0.gibibytes, defaultQuotas.injectedFileContent, 0.gibibytes),
-    injectedFilePath = Usage(0.gibibytes, defaultQuotas.injectedFilePath, 0.gibibytes),
   )
 
   "Quotas service" should {
