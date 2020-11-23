@@ -5,7 +5,7 @@ import cats.syntax.flatMap._
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
-import org.http4s.client.Client
+import org.http4s.client.{Client, UnexpectedStatus}
 import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
@@ -26,9 +26,10 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
     import org.http4s.Status.{BadRequest, Successful}
 
     implicit val d: EntityDecoder[F, R] = unwrapped(Some(name))
-    GET(uri, authToken).flatMap(client.run(_).use {
+    GET(uri, authToken).flatMap(request => client.run(request).use {
       case Successful(response) => response.as[R].map(Option.apply)
       case BadRequest(_) => Option.empty[R].pure[F]
+      case response => F.raiseError(UnexpectedStatus(response.status, request.method, request.uri))
     })
   }
 
