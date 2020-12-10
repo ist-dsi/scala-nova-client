@@ -12,11 +12,11 @@ object Quota {
     implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   final case class Create(
-    cores: Option[Int] = None,
     instances: Option[Int] = None,
+    cores: Option[Int] = None,
+    ram: Option[Information] = None,
     keyPairs: Option[Int] = None,
     metadataItems: Option[Int] = None,
-    ram: Option[Information] = None,
     serverGroups: Option[Int] = None,
     serverGroupMembers: Option[Int] = None,
   )
@@ -35,11 +35,11 @@ object Quota {
  * @param serverGroupMembers number of allowed members for each server group.
  */
 final case class Quota(
-  cores: Int,
   instances: Int,
+  cores: Int,
+  ram: Information,
   keyPairs: Int,
   metadataItems: Int,
-  ram: Information,
   serverGroups: Int,
   serverGroupMembers: Int,
 )

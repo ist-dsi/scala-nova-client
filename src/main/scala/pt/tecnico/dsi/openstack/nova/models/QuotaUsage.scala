@@ -22,11 +22,11 @@ object QuotaUsage {
  * @param serverGroupMembers number of allowed members for each server group.
   */
 case class QuotaUsage(
-  cores: Usage[Int],
   instances: Usage[Int],
+  cores: Usage[Int],
+  ram: Usage[Information],
   keyPairs: Usage[Int],
   metadataItems: Usage[Int],
-  ram: Usage[Information],
   serverGroups: Usage[Int],
   serverGroupMembers: Usage[Int],
 )

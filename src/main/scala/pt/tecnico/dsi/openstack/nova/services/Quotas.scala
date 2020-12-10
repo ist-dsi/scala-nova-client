@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.openstack.nova.services
 
 import cats.effect.Sync
-import cats.syntax.flatMap._
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
@@ -10,15 +9,15 @@ import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
 
-final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
-  val uri: Uri = baseUri / "os-quota-sets"
-  val name = "quota_set"
+final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
+  override val uri: Uri = baseUri / "os-quota-sets"
+  
+  private val wrappedAt: Option[String] = Some(name)
 
   private def buildUri(projectId: String, userId: Option[String]): Uri = (uri / projectId).withOptionQueryParam("user_id", userId)
 
-  // In a Rest API if the resource does not exist you return a BadRequest not a NotFound </sarcasm>
+  // In a Rest API if the resource does not exist you return a BadRequest </sarcasm>
   private def getOption[R: Decoder](uri: Uri): F[Option[R]] = {
-    import cats.syntax.applicative._
     import cats.syntax.functor._
     import dsl._
     import org.http4s.EntityDecoder
@@ -26,11 +25,12 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
     import org.http4s.Status.{BadRequest, Successful}
 
     implicit val d: EntityDecoder[F, R] = unwrapped(Some(name))
-    GET(uri, authToken).flatMap(request => client.run(request).use {
+    val request = GET(uri, authToken)
+    client.run(request).use {
       case Successful(response) => response.as[R].map(Option.apply)
-      case BadRequest(_) => Option.empty[R].pure[F]
+      case BadRequest(_) => F.pure(Option.empty[R])
       case response => F.raiseError(UnexpectedStatus(response.status, request.method, request.uri))
-    })
+    }
   }
 
   /**
@@ -48,7 +48,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
    * @param userId id of user to list the quotas for.
    */
   def apply(projectId: String, userId: Option[String] = None): F[Quota] =
-    super.get(wrappedAt = Some(name), buildUri(projectId, userId))
+    super.get(wrappedAt, buildUri(projectId, userId))
 
   /**
    * Shows quota usage for a project.
@@ -63,7 +63,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
    * @param userId id of user to list the quotas for.
    */
   def applyUsage(projectId: String, userId: Option[String] = None): F[QuotaUsage] =
-    super.get(wrappedAt = Some(name), buildUri(projectId, userId) / "detail")
+    super.get(wrappedAt, buildUri(projectId, userId) / "detail")
 
   /**
    * Gets default quotas for a project.
@@ -76,7 +76,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
    * @param projectId UUID of the project.
    */
   def applyDefaults(projectId: String): F[Quota] =
-    super.get(wrappedAt = Some(name), uri / projectId / "defaults")
+    super.get(wrappedAt, uri / projectId / "defaults")
 
   /**
    * Update the quotas for a project or a project and a user.
@@ -87,7 +87,7 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
    */
   def update(projectId: String, quotas: Quota.Create, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
     val forcedEncoder: Encoder[Quota.Create] = implicitly[Encoder.AsObject[Quota.Create]].mapJsonObject(_.add("force", force.asJson))
-    super.put(wrappedAt = Some(name), quotas, buildUri(projectId, userId))(forcedEncoder, Quota.decoder)
+    super.put(wrappedAt, quotas, buildUri(projectId, userId))(forcedEncoder, Quota.decoder)
   }
 
   /**

@@ -8,11 +8,7 @@ import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.ServerSummary
 
-final class Servers[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](session.authToken) {
-  val name = "server"
-  val pluralName = s"${name}s"
-  val uri: Uri = baseUri / pluralName
-  
+final class Servers[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "server", session.authToken) {
   /**
    * Lists summary information for all servers the project ID associated with the authenticated request can access.
    *
