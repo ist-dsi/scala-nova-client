@@ -73,7 +73,7 @@ class QuotasSpec extends Utils {
     }
 
     "update quotas for a project" in withStubProject.use[IO, Assertion] { project =>
-      val newQuotas = Quota.Create(cores = Some(25), instances = Some(25), ram = Some(20.gibibytes))
+      val newQuotas = Quota.Update(cores = Some(25), instances = Some(25), ram = Some(20.gibibytes))
       quotas.update(project.id, newQuotas).idempotently { quota =>
         quota.cores shouldBe 25
         quota.ram shouldBe 20.gibibytes

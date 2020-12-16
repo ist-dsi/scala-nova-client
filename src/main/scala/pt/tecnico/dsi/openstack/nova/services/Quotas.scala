@@ -85,8 +85,8 @@ final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends S
    * @param userId id of user to list the quotas for.
    * @param force whether to force the update even if the quota has already been used and the reserved quota exceeds the new quota.
    */
-  def update(projectId: String, quotas: Quota.Create, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
-    val forcedEncoder: Encoder[Quota.Create] = implicitly[Encoder.AsObject[Quota.Create]].mapJsonObject(_.add("force", force.asJson))
+  def update(projectId: String, quotas: Quota.Update, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
+    val forcedEncoder: Encoder[Quota.Update] = implicitly[Encoder.AsObject[Quota.Update]].mapJsonObject(_.add("force", force.asJson))
     super.put(wrappedAt, quotas, buildUri(projectId, userId))(forcedEncoder, Quota.decoder)
   }
 

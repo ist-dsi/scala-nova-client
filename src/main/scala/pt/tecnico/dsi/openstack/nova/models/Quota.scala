@@ -5,6 +5,7 @@ import cats.derived.ShowPretty
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.{Decoder, Encoder}
 import squants.information.Information
+import squants.information.InformationConversions._
 
 object Quota {
   object Create {
@@ -12,6 +13,29 @@ object Quota {
     implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
   }
   final case class Create(
+    instances: Option[Int] = None,
+    cores: Option[Int] = None,
+    ram: Option[Information] = None,
+    keyPairs: Option[Int] = None,
+    metadataItems: Option[Int] = None,
+    serverGroups: Option[Int] = None,
+    serverGroupMembers: Option[Int] = None,
+  )
+  
+  object Update {
+    implicit val encoder: Encoder.AsObject[Update] = deriveEncoder(renaming.snakeCase)
+    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
+    val zero: Update = Update(
+      instances = Some(0),
+      cores = Some(0),
+      ram = Some(0.bytes),
+      keyPairs = Some(0),
+      metadataItems = Some(0),
+      serverGroups = Some(0),
+      serverGroupMembers = Some(0),
+    )
+  }
+  final case class Update(
     instances: Option[Int] = None,
     cores: Option[Int] = None,
     ram: Option[Information] = None,
