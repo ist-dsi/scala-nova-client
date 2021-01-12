@@ -24,7 +24,7 @@ scalacOptions ++= Seq(
   "-unchecked",                    // Enable additional warnings where generated code depends on assumptions.
   "-Wdead-code",                   // Warn when dead code is identified.
   "-Wextra-implicit",              // Warn when more than one implicit parameter section is defined.
-  "-Wnumeric-widen",               // Warn when numerics are widened.
+  //"-Wnumeric-widen",               // Warn when numerics are widened.
   "-Woctal-literal",               // Warn on obsolete octal syntax.
   "-Wvalue-discard",               // Warn when non-Unit expression results are unused.
   "-Wunused:_",                    // Enables every warning of unused members/definitions/etc
@@ -41,7 +41,7 @@ scalacOptions in (Test, console) := (scalacOptions in (Compile, console)).value
 // ==== Dependencies ====================================================================================================
 // ======================================================================================================================
 libraryDependencies ++= Seq(
-  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.6.1-SNAPSHOT",
+  "pt.tecnico.dsi"  %% "scala-keystone-client" % "0.7.0-SNAPSHOT",
   "org.typelevel"   %% "squants"               % "1.7.0",
   "com.beachape"    %% "enumeratum-circe"      % "1.6.1",
   "ch.qos.logback"  %  "logback-classic"       % "1.2.3" % Test,
