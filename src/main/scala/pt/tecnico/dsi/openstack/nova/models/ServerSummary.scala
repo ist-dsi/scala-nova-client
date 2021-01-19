@@ -12,6 +12,6 @@ object ServerSummary {
 }
 case class ServerSummary(
   id: String,
-  name: Option[String] = None,
+  name: String,
   links: List[Link] = List.empty,
 ) extends Identifiable
