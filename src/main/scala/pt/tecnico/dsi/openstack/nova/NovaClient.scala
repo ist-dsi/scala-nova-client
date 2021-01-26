@@ -4,7 +4,7 @@ import cats.effect.Sync
 import org.http4s.Uri
 import org.http4s.client.Client
 import pt.tecnico.dsi.openstack.keystone.models.{ClientBuilder, Session}
-import pt.tecnico.dsi.openstack.nova.services.{Keypairs, Quotas, Servers}
+import pt.tecnico.dsi.openstack.nova.services._
 
 object NovaClient extends ClientBuilder {
 	final type OpenstackClient[F[_]] = NovaClient[F]
@@ -19,4 +19,5 @@ class NovaClient[F[_]: Sync](baseUri: Uri, session: Session)(implicit client: Cl
 	val quotas = new Quotas[F](uri, session)
 	val servers = new Servers[F](uri, session)
 	val keypairs = new Keypairs[F](uri, session)
+	val usageReports = new UsageReports[F](uri, session)
 }

@@ -53,6 +53,7 @@ final class Keypairs[F[_]: Sync: Client](baseUri: Uri, session: Session)
   def importPublicKey(name: String, publicKey: String): F[Keypair.Summary] = {
     postHandleConflict(wrappedAt, Map("name" -> name, "public_key" -> publicKey), uri, Seq.empty) {
       apply(name).map { key =>
+        // TODO: this is not correct. If the publicKeys do not match we should raiseError
         Keypair.Summary(key.name, key.publicKey, key.fingerprint)
       }
     }
