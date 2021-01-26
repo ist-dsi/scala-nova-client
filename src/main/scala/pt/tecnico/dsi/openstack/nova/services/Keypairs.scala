@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.nova.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import cats.syntax.functor._
 import fs2.Stream
 import io.circe.{Decoder, HCursor}
@@ -12,7 +12,7 @@ import pt.tecnico.dsi.openstack.nova.models.Keypair
 
 // This service/model is easily one of the most inconsistent/poorly programmed API/models of Openstack
 
-final class Keypairs[F[_]: Sync: Client](baseUri: Uri, session: Session)
+final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   extends PartialCrudService[F](baseUri, "keypair", session.authToken)
     with ReadOperations[F, Keypair]
     with DeleteOperations[F, Keypair] {

@@ -1,7 +1,6 @@
 package pt.tecnico.dsi.openstack.nova
 
 import cats.effect.{IO, Resource}
-import org.scalatest.Assertion
 import pt.tecnico.dsi.openstack.nova.models.Keypair
 
 class KeypairsSpec extends Utils {
@@ -13,7 +12,7 @@ class KeypairsSpec extends Utils {
   }
   
   "Keypairs service" should {
-    "list keypair summary" in withStubKeypair.use[IO, Assertion] { case (_, summary) =>
+    "list keypair summary" in withStubKeypair.use { case (_, summary) =>
       keypairs.listSummary().idempotently { models =>
         models.exists(_.name == summary.name) shouldBe true
       }
@@ -51,7 +50,7 @@ class KeypairsSpec extends Utils {
       }
     }
     
-    "get keypairs (existing name)" in withStubKeypair.use[IO, Assertion] { case (_, summary) =>
+    "get keypairs (existing name)" in withStubKeypair.use { case (_, summary) =>
       keypairs.get(summary.name).idempotently { keypair =>
         keypair.value.name shouldBe summary.name
         keypair.value.fingerprint shouldBe summary.fingerprint
@@ -63,7 +62,7 @@ class KeypairsSpec extends Utils {
       keypairs.get("non-existing-name").idempotently(_ shouldBe None)
     }
     
-    "apply keypairs (existing name)" in withStubKeypair.use[IO, Assertion] { case (_, summary) =>
+    "apply keypairs (existing name)" in withStubKeypair.use { case (_, summary) =>
       keypairs.apply(summary.name).idempotently {
         keypair =>
           keypair.name shouldBe summary.name
@@ -76,7 +75,7 @@ class KeypairsSpec extends Utils {
       keypairs.apply("non-existing-id").attempt.idempotently(_.left.value shouldBe a [NoSuchElementException])
     }
     
-    "delete keypairs" in withStubKeypair.use[IO, Assertion] { case (_, summary) =>
+    "delete keypairs" in withStubKeypair.use { case (_, summary) =>
       keypairs.delete(summary.name).idempotently(_ shouldBe ())
     }
   }

@@ -2,14 +2,14 @@ package pt.tecnico.dsi.openstack.nova.services
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import cats.effect.Sync
+import cats.effect.Concurrent
 import org.http4s.{QueryParamEncoder, Uri}
 import org.http4s.client.Client
 import pt.tecnico.dsi.openstack.common.services.PartialCrudService
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.UsageReport
 
-final class UsageReports[F[_]: Sync: Client](baseUri: Uri, session: Session) extends PartialCrudService[F](baseUri, "tenant_usage", session.authToken) {
+final class UsageReports[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends PartialCrudService[F](baseUri, "tenant_usage", session.authToken) {
   override val uri: Uri = baseUri / "os-simple-tenant-usage"
   
   implicit val localDateTimeQueryParamEncoder: QueryParamEncoder[LocalDateTime] =

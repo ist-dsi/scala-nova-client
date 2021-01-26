@@ -1,6 +1,6 @@
 package pt.tecnico.dsi.openstack.nova.services
 
-import cats.effect.Sync
+import cats.effect.Concurrent
 import io.circe.syntax._
 import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
 
-final class Quotas[F[_]: Sync: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
+final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
   override val uri: Uri = baseUri / "os-quota-sets"
   
   private val wrappedAt: Option[String] = Some(name)

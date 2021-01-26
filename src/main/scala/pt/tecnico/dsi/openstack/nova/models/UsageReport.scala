@@ -6,6 +6,8 @@ import cats.derived.ShowPretty
 import io.circe.{Decoder, HCursor}
 import squants.information.Information
 import io.chrisdavenport.cats.time.localdatetimeInstances
+import pt.tecnico.dsi.openstack.keystone.KeystoneClient
+import pt.tecnico.dsi.openstack.keystone.models.Project
 import squants.information.InformationConversions._
 
 object ServerUsage {
@@ -62,4 +64,6 @@ case class UsageReport(
   totalMemoryUsage: Information,
   totalVCPUsUsage: Double,
   serverUsages: List[ServerUsage] = List.empty,
-)
+) {
+  def project[F[_]](implicit keystone: KeystoneClient[F]): F[Project] = keystone.projects(projectId)
+}

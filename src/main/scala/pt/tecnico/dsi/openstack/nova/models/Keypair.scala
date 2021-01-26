@@ -3,7 +3,6 @@ package pt.tecnico.dsi.openstack.nova.models
 import java.time.{LocalDateTime, OffsetDateTime}
 import cats.derived
 import cats.derived.ShowPretty
-import cats.effect.Sync
 import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
 import io.circe.{Decoder, Encoder}
 import io.chrisdavenport.cats.time.{localdatetimeInstances, offsetdatetimeInstances}
@@ -50,5 +49,5 @@ final case class Keypair(
   override def id: String = name
   override def links: List[Link] = List.empty
   
-  def user[F[_]: Sync](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
+  def user[F[_]](implicit keystone: KeystoneClient[F]): F[User] = keystone.users(userId)
 }
