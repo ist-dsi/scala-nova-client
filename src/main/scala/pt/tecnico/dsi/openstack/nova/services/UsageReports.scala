@@ -24,13 +24,13 @@ final class UsageReports[F[_]: Concurrent: Client](baseUri: Uri, session: Sessio
    *
    * @param projectId UUID of the project.
    */
-  def get(projectId: String, start: Option[LocalDateTime], end: Option[LocalDateTime]): F[Option[UsageReport]] =
+  def get(projectId: String, start: Option[LocalDateTime] = None, end: Option[LocalDateTime] = None): F[Option[UsageReport]] =
     getOption(wrappedAt, (uri / projectId).withOptionQueryParam("start", start).withOptionQueryParam("end", end))
   /**
    * Shows the usage report for a project assuming the project exist.
    *
    * @param projectId UUID of the project.
    */
-  def apply(projectId: String, start: Option[LocalDateTime], end: Option[LocalDateTime]): F[UsageReport] =
+  def apply(projectId: String, start: Option[LocalDateTime] = None, end: Option[LocalDateTime] = None): F[UsageReport] =
     super.get(wrappedAt, (uri /  projectId).withOptionQueryParam("start", start).withOptionQueryParam("end", end))
 }

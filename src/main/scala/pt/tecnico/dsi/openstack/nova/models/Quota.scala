@@ -2,8 +2,8 @@ package pt.tecnico.dsi.openstack.nova.models
 
 import cats.derived
 import cats.derived.ShowPretty
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder}
+import io.circe.derivation.{deriveCodec, deriveEncoder, renaming}
+import io.circe.{Codec, Encoder}
 import squants.information.Information
 import squants.information.InformationConversions._
 
@@ -45,7 +45,7 @@ object Quota {
     serverGroupMembers: Option[Int] = None,
   )
   
-  implicit val decoder: Decoder[Quota] = deriveDecoder(renaming.snakeCase)
+  implicit val codec: Codec[Quota] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
 /**

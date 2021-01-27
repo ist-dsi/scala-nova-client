@@ -3,11 +3,12 @@ package pt.tecnico.dsi.openstack.nova.models
 import java.time.LocalDateTime
 import cats.derived
 import cats.derived.ShowPretty
-import io.circe.{Decoder, HCursor}
-import squants.information.Information
+import io.circe.{Decoder, Encoder, HCursor}
+import io.circe.derivation.{deriveEncoder, renaming}
 import io.chrisdavenport.cats.time.localdatetimeInstances
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
 import pt.tecnico.dsi.openstack.keystone.models.Project
+import squants.information.Information
 import squants.information.InformationConversions._
 
 object ServerUsage {
@@ -26,6 +27,7 @@ object ServerUsage {
     startedAt <- cursor.get[LocalDateTime]("started_at")
     endedAt <- cursor.getOrElse[Option[LocalDateTime]]("ended_at")(Option.empty)
   } yield ServerUsage(name, instanceId, flavor, hours, disk, memory, vcpus, state, uptime, startedAt, endedAt)
+  implicit val encoder: Encoder[ServerUsage] = deriveEncoder(renaming.snakeCase)
 }
 case class ServerUsage(
   name: String,

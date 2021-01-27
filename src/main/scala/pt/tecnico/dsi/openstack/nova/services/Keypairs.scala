@@ -24,7 +24,7 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   
   override val uri: Uri = baseUri / "os-keypairs"
   
-  override implicit val modelDecoder: Decoder[Keypair] = Keypair.decoder
+  override implicit val modelDecoder: Decoder[Keypair] = Keypair.codec
   
   /**
    * Streams summary information for keypairs.
@@ -33,7 +33,7 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    */
   def streamSummary(query: Query = Query.empty): Stream[F, Keypair.Summary] = {
     // Double wrapping for the extra gift sensation
-    implicit val summaryDecoder: Decoder[Keypair.Summary] = Keypair.Summary.decoder.at(name)
+    implicit val summaryDecoder: Decoder[Keypair.Summary] = Keypair.Summary.codec.at(name)
     super.stream[Keypair.Summary](pluralName, uri.copy(query = query))
   }
   

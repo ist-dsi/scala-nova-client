@@ -87,7 +87,7 @@ final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ext
    */
   def update(projectId: String, quotas: Quota.Update, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
     val forcedEncoder: Encoder[Quota.Update] = implicitly[Encoder.AsObject[Quota.Update]].mapJsonObject(_.add("force", force.asJson))
-    super.put(wrappedAt, quotas, buildUri(projectId, userId))(forcedEncoder, Quota.decoder)
+    super.put(wrappedAt, quotas, buildUri(projectId, userId))(forcedEncoder, Quota.codec)
   }
 
   /**

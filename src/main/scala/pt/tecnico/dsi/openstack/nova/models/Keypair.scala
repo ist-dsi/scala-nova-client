@@ -3,8 +3,8 @@ package pt.tecnico.dsi.openstack.nova.models
 import java.time.{LocalDateTime, OffsetDateTime}
 import cats.derived
 import cats.derived.ShowPretty
-import io.circe.derivation.{deriveDecoder, deriveEncoder, renaming}
-import io.circe.{Decoder, Encoder}
+import io.circe.derivation.{deriveCodec, deriveEncoder, renaming}
+import io.circe.{Codec, Encoder}
 import io.chrisdavenport.cats.time.{localdatetimeInstances, offsetdatetimeInstances}
 import pt.tecnico.dsi.openstack.common.models.{Identifiable, Link}
 import pt.tecnico.dsi.openstack.keystone.KeystoneClient
@@ -12,7 +12,7 @@ import pt.tecnico.dsi.openstack.keystone.models.User
 
 object Keypair {
   object Summary {
-    implicit val decoder: Decoder[Summary] = deriveDecoder(renaming.snakeCase)
+    implicit val codec: Codec[Summary] = deriveCodec(renaming.snakeCase)
     implicit val show: ShowPretty[Summary] = derived.semiauto.showPretty
   }
   final case class Summary(
@@ -30,7 +30,7 @@ object Keypair {
     userId: Option[String] = None,
   )
   
-  implicit val decoder: Decoder[Keypair] = deriveDecoder(renaming.snakeCase)
+  implicit val codec: Codec[Keypair] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Keypair] = derived.semiauto.showPretty
 }
 final case class Keypair(
