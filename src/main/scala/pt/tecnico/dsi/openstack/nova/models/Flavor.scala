@@ -95,7 +95,7 @@ object Flavor {
     ephemeral <- cursor.get[Information](baseRenames("ephemeral"))(inGibibytesDecoder)
     swap <- cursor.get[Information]("swap")(inMebibytesDecoder).orElse(Right(0.mebibytes))
     rxtxFactor <- cursor.get[Float]("rxtx_factor")
-    disabled <- cursor.get[Option[Boolean]](baseRenames("disabled"))
+    disabled <- cursor.getOrElse[Boolean](baseRenames("disabled"))(false)
     isPublic <- cursor.getOrElse[Boolean](baseRenames("isPublic"))(true)
     extraSpecs <- cursor.getOrElse[Map[String, String]]("extra_specs")(Map.empty)
     links <- cursor.getOrElse[List[Link]]("links")(List.empty)
@@ -113,7 +113,7 @@ sealed case class Flavor(
   ephemeral: Information = 0.gibibytes,
   swap: Information = 0.mebibytes,
   rxtxFactor: Float = 1.0f,
-  disabled: Option[Boolean] = None,
+  disabled: Boolean = false,
   isPublic: Boolean = true,
   extraSpecs: Map[String, String] = Map.empty,
   
