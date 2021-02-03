@@ -46,12 +46,12 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
   val random = new Random()
   def randomName(): String = random.alphanumeric.take(10).mkString.dropWhile(_.isDigit).toLowerCase
   def withRandomName[T](f: String => IO[T]): IO[T] = IO.delay(randomName()).flatMap(f)
-
+  
   val withStubProject: Resource[IO, Project] = {
     val create = withRandomName(name => keystone.projects.create(Project.Create(name)))
     Resource.make(create)(project => keystone.projects.delete(project))
   }
-
+  
   implicit class RichIO[T](io: IO[T]) {
     def idempotently(test: T => Assertion, repetitions: Int = 3): IO[Assertion] = {
       require(repetitions >= 2, "To test for idempotency at least 2 repetitions must be made")
@@ -82,7 +82,7 @@ abstract class Utils extends AsyncWordSpec with Matchers with BeforeAndAfterAll 
       }
     }
   }
-
+  
   import scala.language.implicitConversions
   implicit def ioAssertion2FutureAssertion(io: IO[Assertion]): Future[Assertion] = io.unsafeToFuture()
 }

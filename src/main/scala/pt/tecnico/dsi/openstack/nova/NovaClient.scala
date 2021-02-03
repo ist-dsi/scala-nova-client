@@ -18,6 +18,7 @@ class NovaClient[F[_]: Concurrent](baseUri: Uri, session: Session)(implicit clie
 
 	val quotas = new Quotas[F](uri, session)
 	val servers = new Servers[F](uri, session)
+	val flavors = new Flavors[F](uri, session)
 	val keypairs = new Keypairs[F](uri, session)
 	val usageReports = new UsageReports[F](uri, session)
 }
