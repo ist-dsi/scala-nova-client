@@ -65,7 +65,7 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param extraHeaders extra headers to pass when making the request. The `authToken` header is always added.
    * @return the private key along side with the keypair summary.
    */
-  def create(create: Keypair.Create, extraHeaders: Header*): F[(String, Keypair.Summary)] = {
+  def create(create: Keypair.Create, extraHeaders: Header.ToRaw*): F[(String, Keypair.Summary)] = {
     implicit val decoder: Decoder[(String, Keypair.Summary)] = (cursor: HCursor) => for {
       privateKey <- cursor.get[String]("private_key")
       keypair <- cursor.as[Keypair.Summary]
@@ -73,10 +73,10 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     post(wrappedAt, create, uri, extraHeaders:_*)
   }
   
-  def apply(create: Keypair.Create, extraHeaders: Header*): F[(String, Keypair.Summary)] =
+  def apply(create: Keypair.Create, extraHeaders: Header.ToRaw*): F[(String, Keypair.Summary)] =
     this.create(create, extraHeaders:_*)
   
-  def createOrUpdate(create: Keypair.Create, extraHeaders: Header*): F[(Option[String], Keypair.Summary)] = {
+  def createOrUpdate(create: Keypair.Create, extraHeaders: Header.ToRaw*): F[(Option[String], Keypair.Summary)] = {
     implicit val decoder: Decoder[(Option[String], Keypair.Summary)] = (cursor: HCursor) => for {
       privateKey <- cursor.get[Option[String]]("private_key")
       keypair <- cursor.as[Keypair.Summary]
@@ -90,7 +90,7 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   
   // These methods were overriden to change the first parameter name to `name` instead of `id`.
   // Why? Because Openstack likes to be consistent </sarcasm>.
-  override def get(name: String, extraHeaders: Header*): F[Option[Keypair]] = super.get(name, extraHeaders:_*)
-  override def apply(name: String, extraHeaders: Header*): F[Keypair] = super.apply(name, extraHeaders:_*)
-  override def delete(name: String, extraHeaders: Header*): F[Unit] = super.delete(name, extraHeaders:_*)
+  override def get(name: String, extraHeaders: Header.ToRaw*): F[Option[Keypair]] = super.get(name, extraHeaders:_*)
+  override def apply(name: String, extraHeaders: Header.ToRaw*): F[Keypair] = super.apply(name, extraHeaders:_*)
+  override def delete(name: String, extraHeaders: Header.ToRaw*): F[Unit] = super.delete(name, extraHeaders:_*)
 }

@@ -62,9 +62,9 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   def listSummary(query: Query = Query.empty): F[List[Flavor.Summary]] =
     super.list[Flavor.Summary](pluralName, uri.copy(query = query))
   
-  override def stream(query: Query, extraHeaders: Header*): Stream[F, Flavor] =
+  override def stream(query: Query, extraHeaders: Header.ToRaw*): Stream[F, Flavor] =
     stream[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
   
-  override def list(query: Query, extraHeaders: Header*): F[List[Flavor]] =
+  override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Flavor]] =
     list[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
 }
