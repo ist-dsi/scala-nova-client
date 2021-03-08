@@ -43,7 +43,13 @@ object Quota {
     metadataItems: Option[Int] = None,
     serverGroups: Option[Int] = None,
     serverGroupMembers: Option[Int] = None,
-  )
+  ) {
+    lazy val needsUpdate: Boolean = {
+      // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
+      //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
+      List(instances, cores, ram, keyPairs, metadataItems, serverGroups, serverGroupMembers).exists(_.isDefined)
+    }
+  }
   
   val zero: Quota = Quota(0, 0, 0.gibibytes, 0, 0, 0, 0)
   
