@@ -45,6 +45,8 @@ object Quota {
     serverGroupMembers: Option[Int] = None,
   )
   
+  val zero: Quota = Quota(0, 0, 0.gibibytes, 0, 0, 0, 0)
+  
   implicit val codec: Codec[Quota] = deriveCodec(renaming.snakeCase)
   implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
 }
