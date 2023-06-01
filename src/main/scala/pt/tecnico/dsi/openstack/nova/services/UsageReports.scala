@@ -12,7 +12,7 @@ import pt.tecnico.dsi.openstack.nova.models.UsageReport
 final class UsageReports[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends PartialCrudService[F](baseUri, "tenant_usage", session.authToken) {
   override val uri: Uri = baseUri / "os-simple-tenant-usage"
   
-  implicit val localDateTimeQueryParamEncoder: QueryParamEncoder[LocalDateTime] =
+  given QueryParamEncoder[LocalDateTime] =
     QueryParamEncoder[String].contramap[LocalDateTime] { (dateTime: LocalDateTime) =>
       // https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html
       val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS")

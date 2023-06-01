@@ -1,16 +1,12 @@
 package pt.tecnico.dsi.openstack.nova.models
 
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
 import io.circe.Codec
-import io.circe.derivation.{deriveCodec, renaming}
+import io.circe.derivation.ConfiguredCodec
 import pt.tecnico.dsi.openstack.common.models.Usage
 import squants.information.Information
 
-object QuotaUsage {
-  implicit val codec: Codec[QuotaUsage] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[QuotaUsage] = derived.semiauto.showPretty
-}
 /**
   * A value of -1 means no limit.
  * @param cores number of allowed server cores for each project.
@@ -29,4 +25,4 @@ case class QuotaUsage(
   metadataItems: Usage[Int],
   serverGroups: Usage[Int],
   serverGroupMembers: Usage[Int],
-)
+) derives ConfiguredCodec, ShowPretty

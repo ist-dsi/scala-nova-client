@@ -1,13 +1,13 @@
 package pt.tecnico.dsi.openstack.nova.services
 
 import cats.effect.Concurrent
-import cats.syntax.flatMap._
-import cats.syntax.functor._
+import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 import fs2.Stream
 import io.circe.{Decoder, Encoder}
 import org.http4s.client.Client
 import org.http4s.{Header, Query, Uri}
-import pt.tecnico.dsi.openstack.common.services._
+import pt.tecnico.dsi.openstack.common.services.*
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.Flavor
 
@@ -21,10 +21,10 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     with CreateNonIdempotentOperations[F, Flavor, Flavor.Create]
     with ListOperations[F, Flavor]
     with ReadOperations[F, Flavor]
-    with DeleteOperations[F, Flavor] {
+    with DeleteOperations[F, Flavor]:
   
-  override implicit val createEncoder: Encoder[Flavor.Create] = Flavor.Create.encoder
-  override implicit val modelDecoder: Decoder[Flavor] = Flavor.decoder
+  override given createEncoder: Encoder[Flavor.Create] = Flavor.Create.given_Encoder_Create
+  override given modelDecoder: Decoder[Flavor] = Flavor.given_Decoder_Flavor
   
   /**
    * Gets the $domainModel with the specified `name`.
@@ -41,10 +41,9 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @return the $domainModel with the given `name`. If more than one exists the first one. If none exists F will contain an error.
    */
   def applyByName(name: String): F[Flavor] =
-    getByName(name).flatMap {
+    getByName(name).flatMap:
       case Some(model) => F.pure(model)
       case None => F.raiseError(new NoSuchElementException(s"""Could not find ${this.name} with name "$name"."""))
-    }
   
   /**
    * Lists summary information for all flavors.
@@ -63,8 +62,7 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
     super.list[Flavor.Summary](pluralName, uri.copy(query = query))
   
   override def stream(query: Query, extraHeaders: Header.ToRaw*): Stream[F, Flavor] =
-    stream[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
+    stream[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Flavor]] =
-    list[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders:_*)
-}
+    list[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders*)

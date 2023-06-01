@@ -1,17 +1,13 @@
 package pt.tecnico.dsi.openstack.nova.models
 
-import cats.derived
+import cats.derived.derived
 import cats.derived.ShowPretty
-import io.circe.derivation.{deriveCodec, deriveEncoder, renaming}
+import io.circe.derivation.{ConfiguredCodec, ConfiguredEncoder}
 import io.circe.{Codec, Encoder}
 import squants.information.Information
-import squants.information.InformationConversions._
+import squants.information.InformationConversions.*
 
-object Quota {
-  object Create {
-    implicit val encoder: Encoder.AsObject[Create] = deriveEncoder(renaming.snakeCase)
-    implicit val show: ShowPretty[Create] = derived.semiauto.showPretty
-  }
+object Quota:
   final case class Create(
     instances: Option[Int] = None,
     cores: Option[Int] = None,
@@ -20,11 +16,9 @@ object Quota {
     metadataItems: Option[Int] = None,
     serverGroups: Option[Int] = None,
     serverGroupMembers: Option[Int] = None,
-  )
+  ) derives ConfiguredEncoder, ShowPretty
   
-  object Update {
-    implicit val encoder: Encoder.AsObject[Update] = deriveEncoder(renaming.snakeCase)
-    implicit val show: ShowPretty[Update] = derived.semiauto.showPretty
+  object Update:
     val zero: Update = Update(
       instances = Some(0),
       cores = Some(0),
@@ -34,7 +28,6 @@ object Quota {
       serverGroups = Some(0),
       serverGroupMembers = Some(0),
     )
-  }
   final case class Update(
     instances: Option[Int] = None,
     cores: Option[Int] = None,
@@ -43,19 +36,13 @@ object Quota {
     metadataItems: Option[Int] = None,
     serverGroups: Option[Int] = None,
     serverGroupMembers: Option[Int] = None,
-  ) {
-    lazy val needsUpdate: Boolean = {
+  ) derives ConfiguredEncoder, ShowPretty:
+    lazy val needsUpdate: Boolean =
       // We could implement this with the next line, but that implementation is less reliable if the fields of this class change
       //  productIterator.asInstanceOf[Iterator[Option[Any]]].exists(_.isDefined)
       List(instances, cores, ram, keyPairs, metadataItems, serverGroups, serverGroupMembers).exists(_.isDefined)
-    }
-  }
   
   val zero: Quota = Quota(0, 0, 0.gibibytes, 0, 0, 0, 0)
-  
-  implicit val codec: Codec[Quota] = deriveCodec(renaming.snakeCase)
-  implicit val show: ShowPretty[Quota] = derived.semiauto.showPretty
-}
 /**
  * A value of -1 means no limit.
  * @param cores number of allowed server cores for each project.
@@ -74,4 +61,4 @@ final case class Quota(
   metadataItems: Int,
   serverGroups: Int,
   serverGroupMembers: Int,
-)
+) derives ConfiguredCodec, ShowPretty

@@ -1,14 +1,15 @@
-package pt.tecnico.dsi.openstack.nova
+package pt.tecnico.dsi.openstack.nova.models
 
 import cats.Show
+import io.circe.derivation.Configuration
 import io.circe.{Codec, Decoder, Encoder}
 import squants.information.Information
-import squants.information.InformationConversions._
+import squants.information.InformationConversions.*
 
-package object models {
-  // Sizes/Quotas in Nova are always in mebibytes.
-  // When setting sizes/quotas they are always whole numbers.
-  implicit val codecInformation: Codec[Information] = Codec.from(Decoder.decodeInt.map(_.mebibytes), Encoder.encodeInt.contramap(_.toMebibytes.ceil.toInt))
-  
-  implicit val showInformation: Show[Information] = Show.fromToString
-}
+given Configuration = Configuration.default.withDefaults.withSnakeCaseMemberNames
+
+// Sizes/Quotas in Nova are always in mebibytes.
+// When setting sizes/quotas they are always whole numbers.
+given Codec[Information] = Codec.from(Decoder.decodeInt.map(_.mebibytes), Encoder.encodeInt.contramap(_.toMebibytes.ceil.toInt))
+
+given Show[Information] = Show.fromToString

@@ -1,7 +1,7 @@
 package pt.tecnico.dsi.openstack.nova.services
 
 import cats.effect.Concurrent
-import io.circe.syntax._
+import io.circe.syntax.*
 import io.circe.{Decoder, Encoder}
 import org.http4s.Uri
 import org.http4s.client.{Client, UnexpectedStatus}
@@ -9,7 +9,7 @@ import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.{Quota, QuotaUsage}
 
-final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken) {
+final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "quota_set", session.authToken):
   override val uri: Uri = baseUri / "os-quota-sets"
   
   private val wrappedAt: Option[String] = Some(name)
@@ -17,21 +17,19 @@ final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ext
   private def buildUri(projectId: String, userId: Option[String]): Uri = (uri / projectId).withOptionQueryParam("user_id", userId)
 
   // In a Rest API if the resource does not exist you return a BadRequest </sarcasm>
-  private def getOption[R: Decoder](uri: Uri): F[Option[R]] = {
-    import cats.syntax.functor._
-    import dsl._
+  private def getOption[R: Decoder](uri: Uri): F[Option[R]] =
+    import cats.syntax.functor.*
+    import dsl.*
     import org.http4s.EntityDecoder
     import org.http4s.Method.GET
     import org.http4s.Status.{BadRequest, Successful}
 
-    implicit val d: EntityDecoder[F, R] = unwrapped(Some(name))
+    given EntityDecoder[F, R] = unwrapped(Some(name))
     val request = GET(uri, authToken)
-    client.run(request).use {
+    client.run(request).use:
       case Successful(response) => response.as[R].map(Option.apply)
       case BadRequest(_) => F.pure(Option.empty[R])
       case response => F.raiseError(UnexpectedStatus(response.status, request.method, request.uri))
-    }
-  }
 
   /**
    * Shows quotas for a project.
@@ -85,10 +83,9 @@ final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ext
    * @param userId id of user to list the quotas for.
    * @param force whether to force the update even if the quota has already been used and the reserved quota exceeds the new quota.
    */
-  def update(projectId: String, quotas: Quota.Update, userId: Option[String] = None, force: Boolean = false): F[Quota] = {
-    val forcedEncoder: Encoder[Quota.Update] = implicitly[Encoder.AsObject[Quota.Update]].mapJsonObject(_.add("force", force.asJson))
-    super.put(wrappedAt, quotas, buildUri(projectId, userId))(forcedEncoder, Quota.codec)
-  }
+  def update(projectId: String, quotas: Quota.Update, userId: Option[String] = None, force: Boolean = false): F[Quota] =
+    given Encoder[Quota.Update] = Quota.Update.derived$ConfiguredEncoder.mapJsonObject(_.add("force", force.asJson))
+    super.put(wrappedAt, quotas, buildUri(projectId, userId))
 
   /**
    * Reverts the quotas to default values for a project or a project and a user.
@@ -97,4 +94,3 @@ final class Quotas[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ext
    * @param userId id of user to list the quotas for.
    */
   def delete(projectId: String, userId: Option[String] = None): F[Unit] = super.delete(buildUri(projectId, userId))
-}

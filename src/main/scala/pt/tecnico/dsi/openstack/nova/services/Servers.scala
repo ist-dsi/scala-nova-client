@@ -8,7 +8,7 @@ import pt.tecnico.dsi.openstack.common.services.Service
 import pt.tecnico.dsi.openstack.keystone.models.Session
 import pt.tecnico.dsi.openstack.nova.models.ServerSummary
 
-final class Servers[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "server", session.authToken) {
+final class Servers[F[_]: Concurrent: Client](baseUri: Uri, session: Session) extends Service[F](baseUri, "server", session.authToken):
   /**
    * Lists summary information for all servers the project ID associated with the authenticated request can access.
    *
@@ -31,4 +31,3 @@ final class Servers[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ex
    * @param serverId UUID of the server.
    */
   def delete(serverId: String): F[Unit] = super.delete(uri / serverId)
-}
