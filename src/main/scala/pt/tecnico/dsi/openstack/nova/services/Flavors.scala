@@ -51,7 +51,7 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param query extra query params to pass in the request.
    */
   def streamSummary(query: Query = Query.empty): Stream[F, Flavor.Summary] =
-    super.stream[Flavor.Summary](pluralName, uri.copy(query = query))
+    super.stream(pluralName, uri.copy(query = query))
   
   /**
    * Lists summary information for all flavors.
@@ -59,10 +59,10 @@ final class Flavors[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
    * @param query extra query params to pass in the request.
    */
   def listSummary(query: Query = Query.empty): F[List[Flavor.Summary]] =
-    super.list[Flavor.Summary](pluralName, uri.copy(query = query))
+    super.list(pluralName, uri.copy(query = query))
   
   override def stream(query: Query, extraHeaders: Header.ToRaw*): Stream[F, Flavor] =
-    stream[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
+    stream(pluralName, (uri / "detail").copy(query = query), extraHeaders*)
   
   override def list(query: Query, extraHeaders: Header.ToRaw*): F[List[Flavor]] =
-    list[Flavor](pluralName, (uri / "detail").copy(query = query), extraHeaders*)
+    list(pluralName, (uri / "detail").copy(query = query), extraHeaders*)

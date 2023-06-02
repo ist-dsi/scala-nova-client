@@ -34,7 +34,7 @@ final class Keypairs[F[_]: Concurrent: Client](baseUri: Uri, session: Session)
   def streamSummary(query: Query = Query.empty): Stream[F, Keypair.Summary] =
     // Double wrapping for the extra gift sensation
     given Decoder[Keypair.Summary] = Keypair.Summary.derived$ConfiguredCodec.at(name)
-    super.stream[Keypair.Summary](pluralName, uri.copy(query = query))
+    super.stream(pluralName, uri.copy(query = query))
   
   /**
    * Lists summary information for keypairs.

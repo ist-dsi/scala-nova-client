@@ -15,7 +15,7 @@ final class Servers[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ex
    * @param query extra query params to pass in the request.
    */
   def streamSummary(query: Query = Query.empty): Stream[F, ServerSummary] =
-    super.stream[ServerSummary](pluralName, uri.copy(query = query))
+    super.stream(pluralName, uri.copy(query = query))
   
   /**
    * Lists summary information for all servers the project ID associated with the authenticated request can access.
@@ -23,7 +23,7 @@ final class Servers[F[_]: Concurrent: Client](baseUri: Uri, session: Session) ex
    * @param query extra query params to pass in the request.
    */
   def listSummary(query: Query = Query.empty): F[List[ServerSummary]] =
-    super.list[ServerSummary](pluralName, uri.copy(query = query))
+    super.list(pluralName, uri.copy(query = query))
   
   /**
    * Deletes a server.
